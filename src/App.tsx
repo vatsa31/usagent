@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { ProviderUsage, UsageLimit } from "./types/usage";
 import "./App.css";
 
 const STALE_AFTER_MS = 15 * 60 * 1000;
+const POLL_INTERVAL_MS = 3 * 60 * 1000;
+const MAX_POLL_BACKOFF_MS = 30 * 60 * 1000;
 
 function formatDate(timestamp: number | null) {
   if (timestamp === null) return "Not provided";
@@ -41,7 +43,14 @@ function LimitCard({ limit }: { limit: UsageLimit }) {
         <strong className={`remaining ${tone}`}>{limit.remainingPercent}%</strong>
       </div>
 
-      <div className="progress-track" aria-label={`${limit.remainingPercent}% remaining`}>
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-label={`${limit.remainingPercent}% remaining`}
+        aria-valuenow={limit.remainingPercent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div
           className={`progress-fill ${tone}`}
           style={{ width: `${limit.remainingPercent}%` }}
@@ -61,17 +70,28 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
+  const [pollResetToken, resetPolling] = useState(0);
+  const refreshInFlight = useRef(false);
+  const pollBackoffMs = useRef(POLL_INTERVAL_MS);
 
   const refresh = useCallback(async () => {
+    if (refreshInFlight.current) return true;
+
+    refreshInFlight.current = true;
     setIsRefreshing(true);
     setError(null);
 
     try {
       const nextUsage = await invoke<ProviderUsage>("get_codex_usage");
       setUsage(nextUsage);
+      pollBackoffMs.current = POLL_INTERVAL_MS;
+      resetPolling((value) => value + 1);
+      return true;
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : String(refreshError));
+      return false;
     } finally {
+      refreshInFlight.current = false;
       setIsRefreshing(false);
     }
   }, []);
@@ -79,6 +99,32 @@ function App() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+    const scheduleNextPoll = () => {
+      timer = window.setTimeout(async () => {
+        const succeeded = await refresh();
+        if (cancelled) return;
+
+        if (!succeeded) {
+          pollBackoffMs.current = Math.min(
+            pollBackoffMs.current * 2,
+            MAX_POLL_BACKOFF_MS,
+          );
+        }
+        scheduleNextPoll();
+      }, pollBackoffMs.current);
+    };
+
+    scheduleNextPoll();
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [refresh, pollResetToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,14 +161,8 @@ function App() {
   }, []);
 
   const isStale = usage !== null && clock - usage.observedAt * 1000 > STALE_AFTER_MS;
-  const coreLimits = useMemo(
-    () => usage?.limits.filter((limit) => limit.id.startsWith("codex.")) ?? [],
-    [usage],
-  );
-  const additionalLimits = useMemo(
-    () => usage?.limits.filter((limit) => !limit.id.startsWith("codex.")) ?? [],
-    [usage],
-  );
+  const coreLimits = usage?.limits.filter((limit) => limit.id.startsWith("codex.")) ?? [];
+  const additionalLimits = usage?.limits.filter((limit) => !limit.id.startsWith("codex.")) ?? [];
 
   return (
     <main className="app-shell">

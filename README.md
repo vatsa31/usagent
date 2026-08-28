@@ -29,4 +29,4 @@ cargo test retrieves_live_codex_usage -- --ignored --nocapture
 
 If `codex` is not discoverable from the GUI environment, set `USAGENT_CODEX_BIN` to its absolute path. The legacy `AGENTMON_CODEX_BIN` variable is also supported.
 
-The Usagent app runs as a macOS menu-bar accessory. Left-click the `Cx` tray title to open the usage popover; right-click for Refresh and Quit. The popover hides when it loses focus.
+The Usagent app runs as a macOS menu-bar accessory. Left-click the `Cx` tray title to open the usage popover; right-click for Refresh and Quit. The popover hides when it loses focus. Usage is refreshed on launch, when the popover opens, on demand, and every three minutes in the background. Failed background refreshes use exponential backoff up to 30 minutes, and overlapping refreshes are skipped.
