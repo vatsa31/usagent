@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import type { ProviderUsage, UsageLimit } from "./types/usage";
 import "./App.css";
 
@@ -77,6 +78,35 @@ function App() {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlistenRefresh: (() => void) | undefined;
+    let unlistenOpen: (() => void) | undefined;
+
+    void Promise.all([
+      listen("refresh-requested", () => {
+        if (!cancelled) void refresh();
+      }),
+      listen("popover-opened", () => {
+        if (!cancelled) void refresh();
+      }),
+    ]).then(([removeRefresh, removeOpen]) => {
+      if (cancelled) {
+        removeRefresh();
+        removeOpen();
+      } else {
+        unlistenRefresh = removeRefresh;
+        unlistenOpen = removeOpen;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unlistenRefresh?.();
+      unlistenOpen?.();
+    };
   }, [refresh]);
 
   useEffect(() => {
