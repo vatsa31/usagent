@@ -3,6 +3,7 @@ mod providers;
 mod usage;
 
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager, WindowEvent,
@@ -46,11 +47,9 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&refresh_item, &quit_item])?;
 
             TrayIconBuilder::with_id("main")
-                .icon(
-                    app.default_window_icon()
-                        .cloned()
-                        .expect("default app icon"),
-                )
+                .icon(Image::from_bytes(include_bytes!(
+                    "../icons/usagent-tray-template.png"
+                ))?)
                 // Render the status item as a monochrome template image on macOS so it
                 // remains visible in both light and dark menu bars.
                 .icon_as_template(true)
