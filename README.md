@@ -1,8 +1,32 @@
 # Usagent
 
-A lightweight macOS menu-bar utility for checking local AI coding-agent usage limits.
+A lightweight macOS menu-bar utility for keeping an eye on your local AI coding-agent usage limits.
 
-The first implemented provider is OpenAI Codex. Its Rust adapter starts the locally installed Codex app-server, reads structured rate-limit data, and returns only a normalized usage model across the Tauri IPC boundary.
+Usagent surfaces your usage from the agents you actually write code with. It reads data from each provider, normalizes it into a single model, and renders a compact per-provider quota view in a menu-bar popover - so you always know how much headroom you have left without opening a dashboard.
+
+## Providers
+
+- **Codex (OpenAI)** - reads structured rate-limit data from your local Codex installation. Reads are cheap and local, so it's polled in the background.
+- **Cursor** - the menu bar also shows your Cursor plan usage.
+- More providers can be added behind the same normalized interface. Currently supports an individual usage view plus a collective-only team pool figure (never per-member).
+
+> **Cursor provider disclosure.** Cursor plan usage is read from an **unofficial, internal endpoint** (`api2.cursor.sh`) using the session token stored locally by the Cursor app. This is an undocumented, unsupported interface — it is not part of Cursor's public API, may change or break without notice, and is provided for your own convenience only. It is not affiliated with, endorsed by, or warranted by Cursor. Please review Cursor's terms of service before using it.
+
+## Behavior
+
+The app runs as a macOS menu-bar accessory.
+
+- Left-click the tray title to open the usage popover; right-click for **Refresh** and **Quit**.
+- The popover has a tab per provider and hides when it loses focus.
+- Usage is refreshed on launch, when the popover opens, and on demand via the Refresh button.
+- Codex usage re-polls every three minutes in the background since it reads local data.
+- Cursor usage is fetched on demand (popover open / manual refresh) and is throttled, since fetching it hits Cursor's remote API. Manual refresh always fetches fresh data.
+- Failed background refreshes use exponential backoff up to 30 minutes; overlapping refreshes are skipped.
+
+## Security
+
+- Provider credentials are read in the Rust (native) side and never stored in the app's config.
+- Only normalized usage numbers cross the IPC boundary to the UI — raw responses and tokens never reach the renderer.
 
 ## Development
 
@@ -11,7 +35,7 @@ Requirements:
 - macOS
 - Node.js and pnpm
 - Rust 1.85 or newer
-- an authenticated Codex CLI installation
+- an authenticated Codex CLI installation (for the Codex provider)
 
 Run deterministic tests:
 
@@ -28,5 +52,3 @@ cargo test retrieves_live_codex_usage -- --ignored --nocapture
 ```
 
 If `codex` is not discoverable from the GUI environment, set `USAGENT_CODEX_BIN` to its absolute path. The legacy `AGENTMON_CODEX_BIN` variable is also supported.
-
-The Usagent app runs as a macOS menu-bar accessory. Left-click the `Cx` tray title to open the usage popover; right-click for Refresh and Quit. The popover hides when it loses focus. Usage is refreshed on launch, when the popover opens, on demand, and every three minutes in the background. Failed background refreshes use exponential backoff up to 30 minutes, and overlapping refreshes are skipped.
