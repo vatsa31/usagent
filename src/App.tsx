@@ -7,6 +7,7 @@ import "./App.css";
 const STALE_AFTER_MS = 15 * 60 * 1000;
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 const MAX_POLL_BACKOFF_MS = 30 * 60 * 1000;
+const CURSOR_THROTTLE_MS = 3 * 60 * 1000;
 
 type ProviderKey = "codex" | "cursor";
 type ProviderData = { usage: ProviderUsage | null; error: string | null };
@@ -222,66 +223,80 @@ function App() {
   const [pollResetToken, resetPolling] = useState(0);
   const refreshInFlight = useRef(false);
   const pollBackoffMs = useRef(POLL_INTERVAL_MS);
+  const lastCursorFetchRef = useRef<number>(0);
 
-  const refresh = useCallback(async () => {
-    if (refreshInFlight.current) return true;
-
-    refreshInFlight.current = true;
-    setIsRefreshing(true);
-
-    const commands: Array<{ key: ProviderKey; name: string }> = [
-      { key: "codex", name: "get_codex_usage" },
-      { key: "cursor", name: "get_cursor_usage" },
-    ];
-
-    const results = await Promise.all(
-      commands.map(async ({ key, name }) => {
-        try {
-          const nextUsage = await invoke<ProviderUsage>(name);
-          return { key, usage: nextUsage, error: null as string | null };
-        } catch (refreshError) {
-          const message =
-            refreshError instanceof Error ? refreshError.message : String(refreshError);
-          return { key, usage: null, error: message };
-        }
-      }),
-    );
-
-    const anySucceeded = results.some((result) => result.usage !== null);
-
-    setProviders((prev) => {
-      const next = { ...prev };
-      for (const result of results) {
-        if (result.usage !== null || result.error !== null) {
-          next[result.key] = {
-            usage: result.usage ?? prev[result.key].usage,
-            error: result.error,
-          };
-        }
+  const refreshProvider = useCallback(
+    async (key: ProviderKey, name: string) => {
+      try {
+        const usage = await invoke<ProviderUsage>(name);
+        setProviders((prev) => ({ ...prev, [key]: { usage, error: null } }));
+        return true;
+      } catch (refreshError) {
+        const message =
+          refreshError instanceof Error ? refreshError.message : String(refreshError);
+        setProviders((prev) => ({ ...prev, [key]: { ...prev[key], error: message } }));
+        return false;
       }
-      return next;
-    });
+    },
+    [],
+  );
 
-    if (anySucceeded) {
-      pollBackoffMs.current = POLL_INTERVAL_MS;
-      resetPolling((value) => value + 1);
-    }
+  const refreshCodex = useCallback(
+    async () => {
+      const ok = await refreshProvider("codex", "get_codex_usage");
+      if (ok) {
+        pollBackoffMs.current = POLL_INTERVAL_MS;
+        resetPolling((value) => value + 1);
+      }
+      return ok;
+    },
+    [refreshProvider],
+  );
 
-    refreshInFlight.current = false;
-    setIsRefreshing(false);
-    return anySucceeded;
-  }, []);
+  const refreshCursor = useCallback(
+    (bypassThrottle: boolean) => {
+      const now = Date.now();
+      if (
+        !bypassThrottle &&
+        now - lastCursorFetchRef.current < CURSOR_THROTTLE_MS
+      ) {
+        return Promise.resolve(true);
+      }
+      lastCursorFetchRef.current = now;
+      return refreshProvider("cursor", "get_cursor_usage");
+    },
+    [refreshProvider],
+  );
+
+  const refreshAll = useCallback(
+    async (bypassCursorThrottle: boolean) => {
+      if (refreshInFlight.current) return true;
+      refreshInFlight.current = true;
+      setIsRefreshing(true);
+
+      const results = await Promise.all([
+        refreshCodex(),
+        refreshCursor(bypassCursorThrottle),
+      ]);
+      const anySucceeded = results.some(Boolean);
+
+      refreshInFlight.current = false;
+      setIsRefreshing(false);
+      return anySucceeded;
+    },
+    [refreshCodex, refreshCursor],
+  );
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void refreshAll(true);
+  }, [refreshAll]);
 
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
     const scheduleNextPoll = () => {
       timer = window.setTimeout(async () => {
-        const succeeded = await refresh();
+        const succeeded = await refreshCodex();
         if (cancelled) return;
 
         if (!succeeded) {
@@ -300,7 +315,7 @@ function App() {
       cancelled = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [refresh, pollResetToken]);
+  }, [refreshCodex, pollResetToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -309,10 +324,10 @@ function App() {
 
     void Promise.all([
       listen("refresh-requested", () => {
-        if (!cancelled) void refresh();
+        if (!cancelled) void refreshAll(false);
       }),
       listen("popover-opened", () => {
-        if (!cancelled) void refresh();
+        if (!cancelled) void refreshAll(false);
       }),
     ]).then(([removeRefresh, removeOpen]) => {
       if (cancelled) {
@@ -329,7 +344,7 @@ function App() {
       unlistenRefresh?.();
       unlistenOpen?.();
     };
-  }, [refresh]);
+  }, [refreshAll]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(Date.now()), 30_000);
@@ -346,7 +361,7 @@ function App() {
           <p className="kicker">Agent usage monitor</p>
           <h1>Usage</h1>
         </div>
-        <button className="refresh-button" onClick={() => void refresh()} disabled={isRefreshing}>
+        <button className="refresh-button" onClick={() => void refreshAll(true)} disabled={isRefreshing}>
           <span aria-hidden="true">↻</span> {isRefreshing ? "Refreshing…" : "Refresh"}
         </button>
       </header>
