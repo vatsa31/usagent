@@ -2,6 +2,9 @@ mod commands;
 mod providers;
 mod usage;
 
+use std::sync::Arc;
+
+use commands::UsageCache;
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -33,6 +36,7 @@ fn toggle_popover(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_positioner::init())
+        .manage(Arc::new(UsageCache::default()))
         .setup(|app| {
             #[cfg(target_os = "macos")]
             {
@@ -89,7 +93,10 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::get_codex_usage])
+        .invoke_handler(tauri::generate_handler![
+            commands::get_codex_usage,
+            commands::get_cursor_usage
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

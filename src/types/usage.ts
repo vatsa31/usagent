@@ -1,4 +1,4 @@
-export type UsageSource = "codex_app_server";
+export type UsageSource = "codex_app_server" | "cursor_dashboard_api";
 
 export interface ProviderUsage {
   provider: string;
