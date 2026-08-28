@@ -72,8 +72,8 @@ impl AppServerSession {
             "initialize",
             json!({
                 "clientInfo": {
-                    "name": "agentmon",
-                    "title": "AI Agent Usage Monitor",
+                    "name": "usagent",
+                    "title": "Usagent",
                     "version": env!("CARGO_PKG_VERSION")
                 },
                 "capabilities": {

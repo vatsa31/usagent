@@ -129,7 +129,7 @@ function App() {
       <header className="app-header">
         <div className="brand-mark" aria-hidden="true">Cx</div>
         <div>
-          <p className="kicker">AI Agent Usage Monitor</p>
+          <p className="kicker">Agent usage monitor</p>
           <h1>Codex usage</h1>
         </div>
         <button className="refresh-button" onClick={() => void refresh()} disabled={isRefreshing}>

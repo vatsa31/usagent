@@ -14,7 +14,8 @@ use crate::usage::{ProviderError, ProviderUsage, UsageLimit, UsageProvider, Usag
 use app_server::AppServerSession;
 use protocol::{GetAccountRateLimitsResponse, RateLimitSnapshot, RateLimitWindow};
 
-const CODEX_BINARY_ENV: &str = "AGENTMON_CODEX_BIN";
+const CODEX_BINARY_ENV: &str = "USAGENT_CODEX_BIN";
+const LEGACY_CODEX_BINARY_ENV: &str = "AGENTMON_CODEX_BIN";
 
 pub struct CodexProvider {
     binary: PathBuf,
@@ -26,7 +27,7 @@ impl CodexProvider {
             .map(|binary| Self { binary })
             .ok_or_else(|| {
                 ProviderError::new(
-                    "Could not find the Codex CLI. Set AGENTMON_CODEX_BIN to its absolute path.",
+                    "Could not find the Codex CLI. Set USAGENT_CODEX_BIN to its absolute path.",
                 )
             })
     }
@@ -47,7 +48,10 @@ impl UsageProvider for CodexProvider {
 }
 
 fn discover_codex_binary() -> Option<PathBuf> {
-    if let Some(path) = env::var_os(CODEX_BINARY_ENV).map(PathBuf::from) {
+    if let Some(path) = env::var_os(CODEX_BINARY_ENV)
+        .or_else(|| env::var_os(LEGACY_CODEX_BINARY_ENV))
+        .map(PathBuf::from)
+    {
         if is_executable_file(&path) {
             return Some(path);
         }

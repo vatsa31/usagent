@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "agentmon",
+  "productName": "Usagent",
   "version": "0.1.0",
-  "identifier": "com.shrivatsakashyap.agentmon",
+  "identifier": "com.shrivatsakashyap.usagent",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "agentmon",
+        "title": "Usagent",
         "width": 520,
         "height": 640,
         "visible": false,

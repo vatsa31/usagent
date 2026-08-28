@@ -1,4 +1,4 @@
-# AI Agent Usage Monitor
+# Usagent
 
 A lightweight macOS menu-bar utility for checking local AI coding-agent usage limits.
 
@@ -27,6 +27,6 @@ cd src-tauri
 cargo test retrieves_live_codex_usage -- --ignored --nocapture
 ```
 
-If `codex` is not discoverable from the GUI environment, set `AGENTMON_CODEX_BIN` to its absolute path.
+If `codex` is not discoverable from the GUI environment, set `USAGENT_CODEX_BIN` to its absolute path. The legacy `AGENTMON_CODEX_BIN` variable is also supported.
 
-The Tauri app runs as a macOS menu-bar accessory. Left-click the `Cx` tray title to open the usage popover; right-click for Refresh and Quit. The popover hides when it loses focus.
+The Usagent app runs as a macOS menu-bar accessory. Left-click the `Cx` tray title to open the usage popover; right-click for Refresh and Quit. The popover hides when it loses focus.

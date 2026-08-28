@@ -42,7 +42,7 @@ pub fn run() {
 
             let refresh_item =
                 MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
-            let quit_item = MenuItem::with_id(app, "quit", "Quit agentmon", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "Quit Usagent", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&refresh_item, &quit_item])?;
 
             TrayIconBuilder::with_id("main")
