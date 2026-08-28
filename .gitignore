@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# pnpm local store
+.pnpm-store
+
+# Turborepo
+.turbo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
