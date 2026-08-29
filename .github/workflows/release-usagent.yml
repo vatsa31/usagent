@@ -7,6 +7,12 @@ on:
         required: true
         type: string
         description: "The usagent version to build (e.g. 0.3.0)"
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "The usagent version to build (e.g. 0.3.0)"
 
 concurrency:
   group: release-usagent-version
