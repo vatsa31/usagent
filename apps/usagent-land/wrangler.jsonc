@@ -5,6 +5,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
   "vars": {
-    "R2_PUBLIC_BASE_URL": ""
+    "R2_PUBLIC_BASE_URL": "https://pub-3136ffcd7dd04af49823ae0a165348a6.r2.dev"
   },
 }
