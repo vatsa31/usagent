@@ -11,6 +11,8 @@
     "build": "turbo run build",
     "build:app": "turbo run build --filter=@agentmon/usagent",
     "dev:app": "turbo run dev --filter=@agentmon/usagent",
+    "build:land": "turbo run build --filter=@agentmon/usagent-land",
+    "dev:land": "turbo run dev --filter=@agentmon/usagent-land",
     "tauri": "pnpm --filter @agentmon/usagent tauri"
   },
   "devDependencies": {

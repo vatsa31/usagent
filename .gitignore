@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.next
+.output
+.nitro
+.tanstack
 
 # pnpm local store
 .pnpm-store

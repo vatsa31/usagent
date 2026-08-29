@@ -6,8 +6,8 @@ Monorepo for the Usagent menu-bar app and its related web properties, managed wi
 
 ```
 apps/
-  usagent/   # Usagent - macOS menu-bar AI usage monitor (Tauri + React)
-  landing/   # (coming soon) landing page
+  usagent/      # Usagent - macOS menu-bar AI usage monitor (Tauri + React)
+  usagent-land/ # useagent landing page (TanStack Start + React)
 ```
 
 ## Apps
