@@ -29,6 +29,13 @@ function formatAge(timestamp: number) {
   return `${Math.floor(elapsedSeconds / 86400)}d ago`;
 }
 
+function initials(label: string | null, fallback: string) {
+  const source = label?.trim() || fallback;
+  const parts = source.split(/[\s@._-]+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
 function LimitCard({ limit }: { limit: UsageLimit }) {
   const tone =
     limit.remainingPercent <= 10
@@ -64,10 +71,7 @@ function LimitCard({ limit }: { limit: UsageLimit }) {
   return (
     <article className="limit-card">
       <div className="limit-heading">
-        <div>
-          <p className="eyebrow">{limit.name}</p>
-          <p className="limit-reset">Resets {formatDate(limit.resetAt)}</p>
-        </div>
+        <span className="limit-label">{limit.name}</span>
         <strong className={`remaining ${tone}`}>{limit.remainingPercent}%</strong>
       </div>
 
@@ -85,9 +89,9 @@ function LimitCard({ limit }: { limit: UsageLimit }) {
         />
       </div>
 
-      <div className="limit-footer">
+      <div className="limit-meta">
         <span>{usedLabel}</span>
-        <span>{limit.windowDurationMinutes ? `${limit.windowDurationMinutes} min window` : "Usage window"}</span>
+        <span>Resets {formatDate(limit.resetAt)}</span>
       </div>
     </article>
   );
@@ -104,7 +108,7 @@ function LimitCardGroup({ title, eyebrow, limits }: { title: string; eyebrow: st
     <section className="additional-section">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">{eyebrow}</p>
+          <span className="eyebrow">{eyebrow}</span>
           <h2>{title}</h2>
         </div>
         <span className="source-label">cursor dashboard api</span>
@@ -145,7 +149,7 @@ function ProviderSection({ provider, data, clock }: { provider: ProviderKey; dat
     <div className="provider-panel">
       {data.error && (
         <div className={`status-banner ${usage ? "stale" : "error"}`} role="alert">
-          <span className="status-icon" aria-hidden="true">{usage ? "!" : "×"}</span>
+          <span className="status-glyph" aria-hidden="true">{usage ? "!" : "×"}</span>
           <div>
             <strong>{usage ? "Showing the last successful snapshot" : `${isCursor ? "Cursor" : "Codex"} usage unavailable`}</strong>
             <p>{data.error}</p>
@@ -161,16 +165,17 @@ function ProviderSection({ provider, data, clock }: { provider: ProviderKey; dat
 
       {usage && (
         <>
-          <section className="account-row" aria-label="Account status">
-            <div>
-              <p className="eyebrow">Account</p>
-              <p className="account-name">{usage.accountLabel ?? (isCursor ? "Cursor account" : "Codex account")}</p>
+          <div className="account-row" aria-label="Account status">
+            <span className="avatar">{initials(usage.accountLabel, isCursor ? "CU" : "CX")}</span>
+            <div className="account-text">
+              <span className="eyebrow">Account</span>
+              <span className="account-name">{usage.accountLabel ?? (isCursor ? "Cursor account" : "Codex account")}</span>
             </div>
-            <div className={`freshness ${isStale ? "stale-text" : ""}`}>
-              <span className="status-dot" aria-hidden="true" />
-              {isStale ? "Stale · " : "Updated "}{formatAge(usage.observedAt)}
-            </div>
-          </section>
+            <span className={`freshness ${isStale ? "stale-text" : ""}`}>
+              <i className="status-dot" aria-hidden="true" />
+              {isStale ? "stale" : `synced ${formatAge(usage.observedAt)}`}
+            </span>
+          </div>
 
           {headline && <section className="limits-grid" aria-label="Primary limits">
             <LimitCard key={headline.id} limit={headline} />
@@ -356,13 +361,16 @@ function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <div className="brand-mark" aria-hidden="true">Ax</div>
-        <div>
-          <p className="kicker">Agent usage monitor</p>
+        <div className="brand-mark" aria-hidden="true">u/</div>
+        <div className="header-title">
+          <span className="kicker">Agent usage monitor</span>
           <h1>Usage</h1>
         </div>
+        <span className="live">
+          <i aria-hidden="true" /> Live
+        </span>
         <button className="refresh-button" onClick={() => void refreshAll(true)} disabled={isRefreshing}>
-          <span aria-hidden="true">↻</span> {isRefreshing ? "Refreshing…" : "Refresh"}
+          <span aria-hidden="true">↻</span> {isRefreshing ? "refreshing…" : "refresh"}
         </button>
       </header>
 
@@ -384,12 +392,12 @@ function App() {
             >
               {label}
               {badge !== undefined && (
-                <span className={`tab-badge ${badge <= 10 ? "critical" : badge <= 20 ? "warning" : "healthy"}`}>
+                <b className={`tab-badge ${badge <= 10 ? "critical" : badge <= 20 ? "warning" : "healthy"}`}>
                   {badge}%
-                </span>
+                </b>
               )}
-              {!!data.error && !data.usage && <span className="tab-error" aria-hidden="true">×</span>}
-              {!available && <span className="tab-dot" aria-hidden="true" />}
+              {!!data.error && !data.usage && <i className="tab-error" aria-hidden="true">×</i>}
+              {!available && !badgeLimit && <i className="tab-dot" aria-hidden="true" />}
             </button>
           );
         })}
@@ -399,12 +407,10 @@ function App() {
         <ProviderSection provider={tab} data={providers[tab]} clock={clock} />
       </div>
 
-      {activeUsage && (
-        <footer className="app-footer">
-          <span>Data stays local to this Mac.</span>
-          <span>Last snapshot: {formatDate(activeUsage.observedAt)}</span>
-        </footer>
-      )}
+      <footer className="app-footer">
+        <span>Data stays local to this Mac.</span>
+        {activeUsage && <span>Last snapshot: {formatDate(activeUsage.observedAt)}</span>}
+      </footer>
     </main>
   );
 }
