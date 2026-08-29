@@ -1,7 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { motion, MotionConfig, type Variants } from "framer-motion";
+
+/* replace with a real inbox when ready */
+const FEEDBACK_EMAIL = "hello@useagent.app";
 
 const providers = [
   {
@@ -166,8 +169,8 @@ function Hero() {
           No second CLI. No guessing.
         </motion.p>
         <motion.div className="actions" variants={fadeUp}>
-          <a className="button primary" href="#access">
-            Get early access <span>→</span>
+          <a className="button primary" href="/download">
+            Download for macOS <span>→</span>
           </a>
           <a className="button secondary" href="#product">
             See the product
@@ -386,51 +389,47 @@ function Snapshot() {
   );
 }
 
-function Waitlist() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("");
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!email.includes("@")) {
-      setStatus("Enter a valid email address.");
-      return;
-    }
-    setStatus("You're on the list. We'll keep the count.");
-    setEmail("");
+function Feedback() {
+  const [copied, setCopied] = useState(false);
+  function share() {
+    const url = new URL("/download", window.location.origin).toString();
+    navigator.clipboard
+      .writeText(url)
+      .then(() => setCopied(true))
+      .catch(() => setCopied(false));
   }
   return (
-    <motion.section className="access content" id="access" {...inViewUp}>
+    <motion.section className="access content" id="share" {...inViewUp}>
       <div>
         <motion.p className="eyebrow" variants={fadeUp}>
-          07 Early access
+          07 Using it?
         </motion.p>
         <motion.h2 variants={fadeUp}>
-          Keep the thread. <em>We&apos;ll keep the count.</em>
+          Got it on your Mac? <em>Tell us the verdict.</em>
         </motion.h2>
         <p>
-          useagent is being shaped with people who live in their coding agents. Join the small
-          first wave.
+          The monitor is live in the wild. If it&apos;s already on your machine,
+          one line of feedback goes a long way — and passing the link along
+          helps someone else skip the guessing too.
         </p>
       </div>
-      <div className="waitlist-card">
-        <form onSubmit={submit}>
-          <label htmlFor="email">Your email</label>
-          <div>
-            <input
-              id="email"
-              type="email"
-              placeholder="you@machine.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <button className="button primary" type="submit">
-              Request access <span>→</span>
-            </button>
-          </div>
-        </form>
-        <small>One useful email. No noise. Unsubscribe anytime.</small>
-        {status && <p className={status.startsWith("You're") ? "success" : "error"}>{status}</p>}
+      <div className="share-card">
+        <h3>Already on your Mac?</h3>
+        <p>Send your take, or share the link with someone who could use it.</p>
+        <div className="share-actions">
+          <a
+            className="button primary"
+            href={`mailto:${FEEDBACK_EMAIL}?subject=useagent%20feedback`}
+          >
+            Send your take <span>→</span>
+          </a>
+          <button className="button secondary" type="button" onClick={share}>
+            {copied ? "Copied" : "Share useagent"} <span>↵</span>
+          </button>
+        </div>
+        <small>
+          {copied ? "Download link copied — pass it on." : "macOS builds are ready on the download page."}
+        </small>
       </div>
     </motion.section>
   );
@@ -470,7 +469,7 @@ export function UseagentPage() {
         <Providers />
         <System />
         <Snapshot />
-        <Waitlist />
+        <Feedback />
       </main>
       <Footer />
     </MotionConfig>
