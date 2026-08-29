@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { ProviderUsage, UsageLimit } from "./types/usage";
+import type { ProviderUsage, UsageLimit, UsageSource } from "./types/usage";
 import "./App.css";
 
 const STALE_AFTER_MS = 15 * 60 * 1000;
@@ -34,6 +34,15 @@ function initials(label: string | null, fallback: string) {
   const parts = source.split(/[\s@._-]+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return source.slice(0, 2).toUpperCase();
+}
+
+function sourceLabel(source: UsageSource) {
+  switch (source) {
+    case "codex_app_server":
+      return "codex app server";
+    case "cursor_dashboard_api":
+      return "cursor dashboard api";
+  }
 }
 
 function LimitCard({ limit }: { limit: UsageLimit }) {
@@ -102,7 +111,7 @@ function formatCents(cents: number | undefined | null) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-function LimitCardGroup({ title, eyebrow, limits }: { title: string; eyebrow: string; limits: UsageLimit[] }) {
+function LimitCardGroup({ title, eyebrow, limits, source }: { title: string; eyebrow: string; limits: UsageLimit[]; source: UsageSource }) {
   if (limits.length === 0) return null;
   return (
     <section className="additional-section">
@@ -111,7 +120,7 @@ function LimitCardGroup({ title, eyebrow, limits }: { title: string; eyebrow: st
           <span className="eyebrow">{eyebrow}</span>
           <h2>{title}</h2>
         </div>
-        <span className="source-label">cursor dashboard api</span>
+        <span className="source-label">{sourceLabel(source)}</span>
       </div>
       <div className="additional-list">
         {limits.map((limit) => <LimitCard key={limit.id} limit={limit} />)}
@@ -187,11 +196,13 @@ function ProviderSection({ provider, data, clock }: { provider: ProviderKey; dat
                 eyebrow="Your seat"
                 title="Individual usage"
                 limits={individualLimits.filter((limit) => limit.id !== headlineId)}
+                source={usage.source}
               />
               <LimitCardGroup
                 eyebrow="Team"
                 title="Team usage"
                 limits={teamLimits}
+                source={usage.source}
               />
             </>
           )}
@@ -201,6 +212,7 @@ function ProviderSection({ provider, data, clock }: { provider: ProviderKey; dat
               eyebrow="Metered limits"
               title={isCursor ? "Cursor usage" : "Codex capacity"}
               limits={meteredLimits}
+              source={usage.source}
             />
           )}
 
@@ -209,6 +221,7 @@ function ProviderSection({ provider, data, clock }: { provider: ProviderKey; dat
               eyebrow="Other capacity"
               title={isCursor ? "Other limits" : "Other Codex capacity"}
               limits={additionalLimits}
+              source={usage.source}
             />
           )}
         </>
