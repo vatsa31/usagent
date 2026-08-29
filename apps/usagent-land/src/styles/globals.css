@@ -67,3 +67,15 @@ body { @apply bg-background text-foreground; }
 .glitch { position: relative; }.glitch:hover { color: var(--orange); }.mono { font-family: var(--mono); }
 
 @media (max-width:560px){.actions{flex-wrap:wrap}.actions .button{width:100%}.monitor-tabs span{padding-inline:14px}.window-bar{font-size:8px}.footer-bottom div{margin-top:18px}}
+
+/* Download page */
+.download { display:grid; grid-template-columns:1fr 1fr; gap:10%; align-items:center; padding-block:140px; }
+.download h1 { margin:26px 0 20px; font-size:clamp(3rem,6vw,6rem); line-height:.9; max-width:700px; }
+.download h1 em { color:var(--orange); font-style:normal; }
+.download-body { max-width:440px; font-size:15px; }
+.download-panel { padding:30px; border:1px solid var(--line); background:var(--charcoal); }
+.download-ready h2 { font-size:26px; margin-bottom:12px; }
+.download-ready p { color:#9d9b94; font-size:14px; margin-bottom:26px; }
+.ready-dot { color:var(--orange); font-size:10px; letter-spacing:1px; }
+.download-panel small { display:block; margin-top:16px; color:#777; font:10px var(--mono); }
+@media (max-width:760px){.download{grid-template-columns:1fr;gap:48px;padding-block:90px}.download-panel{padding:22px}}

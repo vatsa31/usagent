@@ -112,7 +112,7 @@ function Limit({ label, value, amount }: { label: string; value: string; amount:
   );
 }
 
-function Header() {
+export function Header() {
   return (
     <motion.header
       className="site-header"
@@ -122,18 +122,18 @@ function Header() {
       style={{ willChange: "opacity" }}
     >
       <div className="content header-inner">
-        <a className="brand" href="#top">
+        <a className="brand" href="/">
           <span className="brand-mark">u/</span>
           <span>useagent</span>
           <small>beta</small>
         </a>
         <nav>
-          <a href="#product">Product</a>
-          <a href="#providers">Providers</a>
-          <a href="#system">System</a>
+          <a href="/#product">Product</a>
+          <a href="/#providers">Providers</a>
+          <a href="/#system">System</a>
         </nav>
-        <a className="header-cta" href="#access">
-          Join the beta <span>→</span>
+        <a className="header-cta" href="/download">
+          Download <span>→</span>
         </a>
         <button className="menu" aria-label="Open navigation">
           ☰
@@ -436,11 +436,11 @@ function Waitlist() {
   );
 }
 
-function Footer() {
+export function Footer() {
   return (
     <motion.footer {...inView}>
       <div className="content footer-top">
-        <a className="brand" href="#top">
+        <a className="brand" href="/">
           <span className="brand-mark">u/</span>
           <span>useagent</span>
         </a>
@@ -450,9 +450,9 @@ function Footer() {
       <div className="content footer-bottom">
         <span>© 2026 useagent / local by default</span>
         <div>
-          <a href="#product">Product</a>
-          <a href="#providers">Providers</a>
-          <a href="#access">Early access</a>
+          <a href="/#product">Product</a>
+          <a href="/#providers">Providers</a>
+          <a href="/download">Download</a>
         </div>
       </div>
     </motion.footer>
