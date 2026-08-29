@@ -1,0 +1,102 @@
+name: Version Usagent
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/usagent/**"
+      - ".changeset/**"
+      - ".github/workflows/version-usagent.yml"
+
+concurrency:
+  group: version-usagent-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PACKAGE: "@agentmon/usagent"
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply changesets and sync tauri version
+        run: pnpm version:packages
+
+      - name: Detect version bump
+        id: diff
+        run: |
+          if git diff --exit-code --quiet; then
+            echo "No version bump required (no changeset applied)."
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read bumped version
+        id: version
+        if: steps.diff.outputs.bumped == 'true'
+        run: |
+          VERSION="$(node -p "require('./apps/usagent/package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=usagent@$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release tag will be: usagent@$VERSION"
+
+      - name: Commit version bump
+        if: steps.diff.outputs.bumped == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: release ${{ steps.version.outputs.tag }}"
+          git push origin HEAD:main
+
+      - name: Create git tag
+        if: steps.diff.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: steps.diff.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes
+
+      - name: Trigger DMG build and upload
+        if: steps.diff.outputs.bumped == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "release-usagent.yml",
+              ref: "main",
+              inputs: { version: "${{ steps.version.outputs.version }}" },
+            });
