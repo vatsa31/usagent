@@ -1,0 +1,115 @@
+name: Release Usagent DMG to R2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/usagent/**"
+
+concurrency:
+  group: release-usagent-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BUCKET: usagent
+
+jobs:
+  build-and-upload:
+    runs-on: macos-14
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/usagent/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build DMG
+        run: pnpm --filter @agentmon/usagent tauri build
+
+      - name: Prepare artifact metadata
+        id: artifact
+        run: |
+          VERSION="$(node -p "require('./apps/usagent/src-tauri/tauri.conf.json').version")"
+          DMG_FILE="$(ls -1 apps/usagent/src-tauri/target/release/bundle/dmg/*.dmg | head -n1)"
+          DMG_NAME="$(basename "$DMG_FILE")"
+          SHA256="$(shasum -a 256 "$DMG_FILE" | awk '{print $1}')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dmg_file=$DMG_FILE" >> "$GITHUB_OUTPUT"
+          echo "dmg_name=$DMG_NAME" >> "$GITHUB_OUTPUT"
+          echo "dmg_sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "dmg_key=v$VERSION/$DMG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Install AWS CLI
+        run: |
+          curl -fsSL "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "$RUNNER_TEMP/AWSCLIV2.pkg"
+          sudo installer -pkg "$RUNNER_TEMP/AWSCLIV2.pkg" -target /
+          aws --version
+
+      - name: Upload DMG to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: "true"
+          AWS_DEFAULT_REGION: auto
+        run: |
+          ENDPOINT="https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          aws s3 cp \
+            --endpoint-url "$ENDPOINT" \
+            --metadata "git_sha=${{ github.sha }}" \
+            --no-progress \
+            "${{ steps.artifact.outputs.dmg_file }}" \
+            "s3://$BUCKET/${{ steps.artifact.outputs.dmg_key }}"
+
+      - name: Update latest.json
+        env:
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          LATEST_FILE: ${{ runner.temp }}/latest.json
+          VERSION: ${{ steps.artifact.outputs.version }}
+          DMG_KEY: ${{ steps.artifact.outputs.dmg_key }}
+          SHA256: ${{ steps.artifact.outputs.dmg_sha256 }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: "true"
+          AWS_DEFAULT_REGION: auto
+        run: |
+          if [ -z "$R2_PUBLIC_BASE_URL" ]; then
+            echo "R2_PUBLIC_BASE_URL not set; skipping latest.json upload"
+            exit 0
+          fi
+          node -e '
+            const fs = require("fs");
+            const meta = {
+              version: process.env.VERSION,
+              url: `${process.env.R2_PUBLIC_BASE_URL}/${process.env.DMG_KEY}`,
+              sha256: process.env.SHA256,
+              arch: "aarch64",
+              updatedAt: new Date().toISOString(),
+            };
+            fs.writeFileSync(process.env.LATEST_FILE, JSON.stringify(meta, null, 2));
+          '
+          ENDPOINT="https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          aws s3 cp \
+            --endpoint-url "$ENDPOINT" \
+            --content-type "application/json" \
+            --cache-control "no-store, max-age=0" \
+            --no-progress \
+            "$LATEST_FILE" \
+            "s3://$BUCKET/latest.json"
