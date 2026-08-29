@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { motion, MotionConfig, type Variants } from "framer-motion";
 
 const providers = [
   {
@@ -28,9 +29,43 @@ const upcoming = [
   ["Windsurf", "#14b8a6"],
 ];
 
-function UsageMonitor() {
+/* motion defaults — Emil Kowalski-inspired: short distances, ease-out-expo, respect reduced motion */
+const EASE = [0.16, 1, 0.3, 1] as const;
+const DUR = 0.5;
+
+const stagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: DUR, ease: EASE } },
+};
+
+const fade: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: DUR, ease: EASE } },
+};
+
+/* use for full-width background sections so the background doesn't "slide" in */
+const inView = {
+  variants: fade,
+  initial: "hidden",
+  whileInView: "show",
+  viewport: { once: true, amount: 0.15 },
+} as const;
+
+const inViewUp = {
+  variants: fadeUp,
+  initial: "hidden",
+  whileInView: "show",
+  viewport: { once: true, amount: 0.15 },
+} as const;
+
+function UsageMonitor({ variants }: { variants?: Variants }) {
   return (
-    <div className="usage-monitor" aria-label="Live useagent usage monitor">
+    <motion.div className="usage-monitor" aria-label="Live useagent usage monitor" variants={variants}>
       <div className="monitor-head">
         <span className="agent-mark">u/</span>
         <div>
@@ -60,7 +95,7 @@ function UsageMonitor() {
         <span>Reading local provider state</span>
         <span className="scan">▰▰▰</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 function Limit({ label, value, amount }: { label: string; value: string; amount: string }) {
@@ -79,7 +114,13 @@ function Limit({ label, value, amount }: { label: string; value: string; amount:
 
 function Header() {
   return (
-    <header className="site-header">
+    <motion.header
+      className="site-header"
+      variants={fade}
+      initial="hidden"
+      animate="show"
+      style={{ willChange: "opacity" }}
+    >
       <div className="content header-inner">
         <a className="brand" href="#top">
           <span className="brand-mark">u/</span>
@@ -98,38 +139,46 @@ function Header() {
           ☰
         </button>
       </div>
-    </header>
+    </motion.header>
   );
 }
 
 function Hero() {
   return (
-    <section className="hero content" id="top">
-      <div className="hero-copy">
-        <p className="eyebrow">01 Agent usage monitor</p>
-        <h1>
-          Know what's left.
+    <motion.section
+      className="hero content"
+      id="top"
+      variants={stagger}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div className="hero-copy" variants={stagger}>
+        <motion.p className="eyebrow" variants={fadeUp}>
+          01 Agent usage monitor
+        </motion.p>
+        <motion.h1 variants={fadeUp}>
+          Know what&apos;s left.
           <br />
           <em>Keep moving.</em>
-        </h1>
-        <p className="hero-body">
+        </motion.h1>
+        <motion.p className="hero-body" variants={fadeUp}>
           Real-time Codex and Cursor limits in a native, local-first monitor. No dashboard detours.
           No second CLI. No guessing.
-        </p>
-        <div className="actions">
+        </motion.p>
+        <motion.div className="actions" variants={fadeUp}>
           <a className="button primary" href="#access">
             Get early access <span>→</span>
           </a>
           <a className="button secondary" href="#product">
             See the product
           </a>
-        </div>
-        <p className="status">
+        </motion.div>
+        <motion.p className="status" variants={fadeUp}>
           <i /> Monitoring Codex <span>· Codex + Cursor available at launch</span>
-        </p>
-      </div>
-      <UsageMonitor />
-      <div className="hero-rail">
+        </motion.p>
+      </motion.div>
+      <UsageMonitor variants={fadeUp} />
+      <motion.div className="hero-rail" variants={fadeUp}>
         <span>
           <b>Local-first</b>Provider state stays on your machine.
         </span>
@@ -139,14 +188,14 @@ function Hero() {
         <span>
           <b>One view</b>Every agent. No context switch.
         </span>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }
 
 function ProductVisual() {
   return (
-    <section className="product content" id="product">
+    <motion.section className="product content" id="product" {...inViewUp}>
       <div className="section-kicker">
         <span>02 Product view</span>
         <span>scroll to inspect</span>
@@ -200,8 +249,10 @@ function ProductVisual() {
           </div>
         </div>
       </div>
-      <p className="caption">The answer is one glance away.</p>
-    </section>
+      <motion.p className="caption" variants={fadeUp}>
+        The answer is one glance away.
+      </motion.p>
+    </motion.section>
   );
 }
 
@@ -216,12 +267,12 @@ function Problem() {
     ["C", "Lose the thread", "Context switching costs more than the check itself."],
   ];
   return (
-    <section className="problem" id="friction">
+    <motion.section className="problem" id="friction" {...inView}>
       <div className="content problem-grid">
         <div>
           <p className="eyebrow">03 The hidden cost</p>
           <h2>
-            The expensive part isn't checking. <em>It's coming back.</em>
+            The expensive part isn&apos;t checking. <em>It&apos;s coming back.</em>
           </h2>
           <p>
             Agents move quickly. Usage information should not ask you to leave the work, open
@@ -241,13 +292,13 @@ function Problem() {
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
 function Providers() {
   return (
-    <section className="providers content" id="providers">
+    <motion.section className="providers content" id="providers" {...inViewUp}>
       <p className="eyebrow">04 Provider ledger</p>
       <h2>
         Different limits. <em>One readable system.</em>
@@ -284,13 +335,13 @@ function Providers() {
           </span>
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 }
 
 function System() {
   return (
-    <section className="system content" id="system">
+    <motion.section className="system content" id="system" {...inViewUp}>
       <p className="eyebrow">05 The system</p>
       <h2>
         Quiet by default. <em>Useful on demand.</em>
@@ -311,13 +362,13 @@ function System() {
       <div className="command">
         <span>$</span> usage is ready when you need it <i>▋</i>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
 function Snapshot() {
   return (
-    <section className="snapshot">
+    <motion.section className="snapshot" {...inView}>
       <div className="content snapshot-grid">
         <div className="percent">
           67<sup>%</sup>
@@ -331,7 +382,7 @@ function Snapshot() {
           <small>checked 08:42:17 UTC · scope: edge</small>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -348,15 +399,17 @@ function Waitlist() {
     setEmail("");
   }
   return (
-    <section className="access content" id="access">
+    <motion.section className="access content" id="access" {...inViewUp}>
       <div>
-        <p className="eyebrow">07 Early access</p>
-        <h2>
-          Keep the thread. <em>We'll keep the count.</em>
-        </h2>
+        <motion.p className="eyebrow" variants={fadeUp}>
+          07 Early access
+        </motion.p>
+        <motion.h2 variants={fadeUp}>
+          Keep the thread. <em>We&apos;ll keep the count.</em>
+        </motion.h2>
         <p>
-          useagent is being shaped with people who live in their coding agents. Join the small first
-          wave.
+          useagent is being shaped with people who live in their coding agents. Join the small
+          first wave.
         </p>
       </div>
       <div className="waitlist-card">
@@ -379,13 +432,13 @@ function Waitlist() {
         <small>One useful email. No noise. Unsubscribe anytime.</small>
         {status && <p className={status.startsWith("You're") ? "success" : "error"}>{status}</p>}
       </div>
-    </section>
+    </motion.section>
   );
 }
 
 function Footer() {
   return (
-    <footer>
+    <motion.footer {...inView}>
       <div className="content footer-top">
         <a className="brand" href="#top">
           <span className="brand-mark">u/</span>
@@ -402,13 +455,13 @@ function Footer() {
           <a href="#access">Early access</a>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }
 
 export function UseagentPage() {
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Header />
       <main>
         <Hero />
@@ -420,6 +473,6 @@ export function UseagentPage() {
         <Waitlist />
       </main>
       <Footer />
-    </>
+    </MotionConfig>
   );
 }
