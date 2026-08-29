@@ -10,9 +10,12 @@
     "build:land": "turbo run build --filter=@agentmon/usagent-land",
     "dev:land": "turbo run dev --filter=@agentmon/usagent-land",
     "tauri": "pnpm --filter @agentmon/usagent tauri",
-    "deploy:land": "pnpm --filter @agentmon/usagent-land run deploy"
+    "deploy:land": "pnpm --filter @agentmon/usagent-land run deploy",
+    "changeset": "changeset",
+    "version:packages": "changeset version && node scripts/sync-tauri-version.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.0",
     "turbo": "^2"
   },
   "engines": {

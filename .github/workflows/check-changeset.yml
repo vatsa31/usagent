@@ -1,0 +1,54 @@
+name: Check Changeset
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: check-changeset-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect usagent changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            usagent:
+              - 'apps/usagent/**'
+
+      - name: Verify changeset present when usagent changes
+        id: verify
+        uses: actions/github-script@v7
+        if: steps.filter.outputs.usagent == 'true'
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const hasChangeset = files.some(
+              (f) => f.status !== "removed" && /^\.changeset\/.+\.md$/.test(f.filename)
+            );
+
+            if (!hasChangeset) {
+              core.setFailed(
+                "This PR changes apps/usagent but does not include a changeset. " +
+                "Add a file under .changeset/ (run `pnpm changeset`) to describe the bump."
+              );
+            }
+
+      - name: Confirm no changeset needed when no usagent changes
+        if: steps.filter.outputs.usagent != 'true'
+        run: echo "No changes under apps/usagent; changeset not required."

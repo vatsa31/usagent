@@ -1,17 +1,19 @@
 name: Release Usagent DMG to R2
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "apps/usagent/**"
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "The usagent version to build (e.g. 0.3.0)"
 
 concurrency:
-  group: release-usagent-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-usagent-version
+  cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   BUCKET: usagent
@@ -41,13 +43,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Assert version is in sync
+        run: |
+          EXPECTED="${{ inputs.version }}"
+          ACTUAL="$(node -p "require('./apps/usagent/package.json').version")"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Version mismatch: expected $EXPECTED, got $ACTUAL"
+            exit 1
+          fi
+          echo "Version confirmed: $ACTUAL"
+
       - name: Build DMG
         run: pnpm --filter @agentmon/usagent tauri build
 
       - name: Prepare artifact metadata
         id: artifact
         run: |
-          VERSION="$(node -p "require('./apps/usagent/src-tauri/tauri.conf.json').version")"
+          VERSION="${{ inputs.version }}"
           DMG_FILE="$(ls -1 apps/usagent/src-tauri/target/release/bundle/dmg/*.dmg | head -n1)"
           DMG_NAME="$(basename "$DMG_FILE")"
           SHA256="$(shasum -a 256 "$DMG_FILE" | awk '{print $1}')"
@@ -113,3 +125,11 @@ jobs:
             --no-progress \
             "$LATEST_FILE" \
             "s3://$BUCKET/latest.json"
+
+      - name: Attach DMG to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.artifact.outputs.version }}
+        run: |
+          RELEASE_TAG="usagent@$VERSION"
+          gh release upload "$RELEASE_TAG" "${{ steps.artifact.outputs.dmg_file }}" --clobber
