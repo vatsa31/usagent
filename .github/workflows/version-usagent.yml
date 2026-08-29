@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: version-usagent-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -22,6 +22,9 @@ env:
 jobs:
   version:
     runs-on: ubuntu-latest
+    outputs:
+      bumped: ${{ steps.diff.outputs.bumped }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,15 +91,10 @@ jobs:
             --title "${{ steps.version.outputs.tag }}" \
             --generate-notes
 
-      - name: Trigger DMG build and upload
-        if: steps.diff.outputs.bumped == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: "release-usagent.yml",
-              ref: "main",
-              inputs: { version: "${{ steps.version.outputs.version }}" },
-            });
+  release:
+    if: needs.version.outputs.bumped == 'true'
+    needs: version
+    uses: ./.github/workflows/release-usagent.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
