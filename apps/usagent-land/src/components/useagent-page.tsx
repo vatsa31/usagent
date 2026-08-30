@@ -5,6 +5,7 @@ import { motion, MotionConfig, type Variants } from "framer-motion";
 
 /* replace with a real inbox when ready */
 const FEEDBACK_EMAIL = "hello@useagent.app";
+const GITHUB_URL = "https://github.com/vatsa31/usagent";
 
 const providers = [
   {
@@ -135,8 +136,8 @@ export function Header() {
           <a href="/#providers">Providers</a>
           <a href="/#system">System</a>
         </nav>
-        <a className="header-cta" href="/download">
-          Download <span>→</span>
+        <a className="header-cta" href={GITHUB_URL} target="_blank" rel="noreferrer">
+          GitHub <span>→</span>
         </a>
         <button className="menu" aria-label="Open navigation">
           ☰
@@ -169,8 +170,8 @@ function Hero() {
           No second CLI. No guessing.
         </motion.p>
         <motion.div className="actions" variants={fadeUp}>
-          <a className="button primary" href="/download">
-            Download for macOS <span>→</span>
+          <a className="button primary" href={GITHUB_URL} target="_blank" rel="noreferrer">
+            View on GitHub <span>→</span>
           </a>
           <a className="button secondary" href="#product">
             See the product
@@ -392,9 +393,8 @@ function Snapshot() {
 function Feedback() {
   const [copied, setCopied] = useState(false);
   function share() {
-    const url = new URL("/download", window.location.origin).toString();
     navigator.clipboard
-      .writeText(url)
+      .writeText(GITHUB_URL)
       .then(() => setCopied(true))
       .catch(() => setCopied(false));
   }
@@ -428,7 +428,7 @@ function Feedback() {
           </button>
         </div>
         <small>
-          {copied ? "Download link copied — pass it on." : "macOS builds are ready on the download page."}
+          {copied ? "Repo link copied — pass it on." : "macOS builds are one fork away."}
         </small>
       </div>
     </motion.section>
@@ -451,7 +451,7 @@ export function Footer() {
         <div>
           <a href="/#product">Product</a>
           <a href="/#providers">Providers</a>
-          <a href="/download">Download</a>
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </div>
     </motion.footer>
