@@ -18,7 +18,7 @@ This is one app within the `agentmon` monorepo. See the [repo root README](../RE
 
 The app runs as a macOS menu-bar accessory.
 
-- Left-click the tray title to open the usage popover; right-click for **Refresh** and **Quit**.
+- Click the tray title to toggle the usage popover. **Refresh** and **Quit** are buttons inside the popover.
 - The popover has a tab per provider and hides when it loses focus.
 - Usage is refreshed on launch, when the popover opens, and on demand via the Refresh button.
 - Codex usage re-polls every three minutes in the background since it reads local data.
