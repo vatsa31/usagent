@@ -7,7 +7,6 @@ use std::sync::Arc;
 use commands::UsageCache;
 use tauri::{
     image::Image,
-    menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager, WindowEvent,
 };
@@ -15,6 +14,13 @@ use tauri_plugin_positioner::{Position, WindowExt};
 
 fn show_popover(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        // An accessory (menu-bar-only) app cannot hold application focus, so
+        // macOS immediately resigns focus from any window we show — which the
+        // blur-to-hide handler would then dismiss instantly. Switch to the
+        // Regular policy while the popover is open so it can stay frontmost.
+        #[cfg(target_os = "macos")]
+        let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+
         let _ = window.move_window_constrained(Position::TrayBottomCenter);
         let _ = window.show();
         let _ = window.set_focus();
@@ -22,10 +28,18 @@ fn show_popover(app: &tauri::AppHandle) {
     }
 }
 
+fn hide_popover(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+        #[cfg(target_os = "macos")]
+        let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+    }
+}
+
 fn toggle_popover(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         if window.is_visible().unwrap_or(false) {
-            let _ = window.hide();
+            hide_popover(app);
         } else {
             show_popover(app);
         }
@@ -45,11 +59,11 @@ pub fn run() {
                 app.handle().set_dock_visibility(false)?;
             }
 
-            let refresh_item =
-                MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
-            let quit_item = MenuItem::with_id(app, "quit", "Quit Usagent", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&refresh_item, &quit_item])?;
-
+            // Note: the tray is intentionally built without an attached menu.
+            // On macOS an attached menu makes AppKit intercept every mouse
+            // event on the status item, so `on_tray_icon_event` never fires
+            // and the left-click popover stops working. Refresh/Quit live in
+            // the popover UI instead.
             TrayIconBuilder::with_id("main")
                 .icon(Image::from_bytes(include_bytes!(
                     "../icons/usagent-tray-template.png"
@@ -59,15 +73,7 @@ pub fn run() {
                 .icon_as_template(true)
                 .title("Cx --")
                 .tooltip("Codex usage")
-                .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "refresh" => {
-                        let _ = app.emit("refresh-requested", ());
-                    }
-                    "quit" => app.exit(0),
-                    _ => {}
-                })
                 .on_tray_icon_event(|tray, event| {
                     tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);
                     if let TrayIconEvent::Click {
@@ -86,7 +92,7 @@ pub fn run() {
                 let window_for_listener = window.clone();
                 window.on_window_event(move |event| {
                     if let WindowEvent::Focused(false) = event {
-                        let _ = window_for_listener.hide();
+                        hide_popover(&window_for_listener.app_handle());
                     }
                 });
             }
@@ -95,7 +101,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_codex_usage,
-            commands::get_cursor_usage
+            commands::get_cursor_usage,
+            commands::quit
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

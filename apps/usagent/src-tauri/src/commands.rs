@@ -69,6 +69,11 @@ pub async fn get_cursor_usage(
     Ok(usage)
 }
 
+#[tauri::command]
+pub fn quit(app: AppHandle) {
+    app.exit(0);
+}
+
 fn refresh_tray_title(app: &AppHandle, cache: &UsageCache) {
     let mut title_parts = Vec::new();
     let mut tooltip_parts = Vec::new();

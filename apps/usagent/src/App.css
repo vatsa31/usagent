@@ -193,11 +193,18 @@ h2 { margin: 3px 0 0; font-size: 18px; letter-spacing: -.04em; }
 
 /* footer */
 .app-footer {
-  display: flex; justify-content: space-between; gap: 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
   margin: 40px 30px 0; padding-top: 16px;
   border-top: 1px solid var(--line);
   color: #777; font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .05em;
 }
+
+.quit-button {
+  border: 1px solid var(--line); border-radius: 6px; background: transparent;
+  color: #777; font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: .05em;
+  padding: 3px 8px; cursor: pointer;
+}
+.quit-button:hover { color: var(--paper-strong); border-color: var(--paper-dim); }
 
 @media (max-width: 640px) {
   .app-shell { padding: 14px 0 22px; }
