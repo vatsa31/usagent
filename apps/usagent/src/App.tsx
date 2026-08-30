@@ -423,6 +423,9 @@ function App() {
       <footer className="app-footer">
         <span>Data stays local to this Mac.</span>
         {activeUsage && <span>Last snapshot: {formatDate(activeUsage.observedAt)}</span>}
+        <button className="quit-button" onClick={() => void invoke("quit")}>
+          Quit
+        </button>
       </footer>
     </main>
   );
