@@ -1,5 +1,11 @@
 # @agentmon/usagent
 
+## 0.2.3
+
+### Patch Changes
+
+- 630e782: docs: refresh behavior notes in app README (popover buttons, not tray menu)
+
 ## 0.2.2
 
 ### Patch Changes
