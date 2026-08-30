@@ -7,6 +7,10 @@ on:
         required: true
         type: string
         description: "The usagent version to build (e.g. 0.3.0)"
+      ref:
+        type: string
+        default: "main"
+        description: "Git ref to check out. Should point at the version-bump commit (defaults to main)."
   workflow_dispatch:
     inputs:
       version:
@@ -30,6 +34,8 @@ jobs:
     environment: prod
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: pnpm/action-setup@v4
         with:
