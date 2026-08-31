@@ -79,3 +79,96 @@ body { @apply bg-background text-foreground; }
 .ready-dot { color:var(--orange); font-size:10px; letter-spacing:1px; }
 .download-panel small { display:block; margin-top:16px; color:#777; font:10px var(--mono); }
 @media (max-width:760px){.download{grid-template-columns:1fr;gap:48px;padding-block:90px}.download-panel{padding:22px}}
+
+/* Blog */
+.blog-intro { padding-top:120px; padding-bottom:40px; }
+.blog-intro h1 { margin:26px 0 20px; font-size:clamp(3rem,6vw,6rem); line-height:.9; max-width:820px; }
+.blog-intro h1 em { color:var(--orange); font-style:normal; }
+.blog-intro .section-intro { max-width:560px; font-size:15px; }
+.blog-toc { margin-top:42px; border-block:1px solid var(--line); }
+.blog-toc a { display:flex; align-items:center; justify-content:space-between; padding:16px 2px; border-bottom:1px solid var(--line); color:var(--paper-dim); font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.07em; }
+.blog-toc a:last-child { border-bottom:0; }
+.blog-toc a:hover { color:var(--orange); }
+.blog-toc a::after { content:"→"; }
+
+/* Blog index (list of posts) */
+.blog-index { padding:20px 0 40px; }
+.index-row { display:grid; grid-template-columns:70px 1fr auto; gap:24px; align-items:start; padding:34px 0; border-top:1px solid var(--line); }
+.index-row:last-of-type { border-bottom:1px solid var(--line); }
+.index-num { color:var(--orange); font:500 20px var(--mono); padding-top:2px; }
+.index-copy h2 { font-size:clamp(1.8rem,4vw,3rem); line-height:1; margin:14px 0 14px; max-width:720px; }
+.index-copy h2:hover { color:var(--orange); }
+.index-row:hover .index-copy h2 { color:var(--orange); }
+.index-lede { max-width:640px; font-size:15px; color:#9d9b94; }
+.index-meta { margin-top:18px; color:#777; font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.09em; }
+.index-arrow { font:24px var(--mono); color:var(--paper-dim); padding-top:6px; transition:transform .2s var(--ease), color .2s; }
+.index-row:hover .index-arrow { color:var(--orange); transform:translateX(6px); }
+
+/* Blog post (individual page) */
+.blog-post { padding:96px 0 30px; border-top:1px solid var(--line); }
+.post-back { display:inline-block; margin-bottom:34px; color:var(--paper-dim); font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.07em; }
+.post-back:hover { color:var(--orange); }
+.post-next { margin-top:30px; padding:36px 0; border-top:1px solid var(--line); }
+.post-next .eyebrow { margin-bottom:16px; }
+.post-next a { display:flex; align-items:baseline; justify-content:space-between; gap:20px; font-size:clamp(1.6rem,3.5vw,2.6rem); letter-spacing:-.05em; line-height:1; max-width:680px; }
+.post-next a:hover { color:var(--orange); }
+.post-next a span { color:var(--orange); }
+
+@media (max-width:760px){
+  .blog-index { padding-top:0; }
+  .index-row { grid-template-columns:44px 1fr; gap:14px; padding:26px 0; }
+  .index-arrow { display:none; }
+  .post-next a { flex-direction:column; align-items:flex-start; gap:10px; }
+}
+.post-head h1 { margin:24px 0 18px; font-size:clamp(2.4rem,5vw,4.6rem); line-height:.95; max-width:860px; }
+.post-head h1 em { color:var(--orange); font-style:normal; }
+.post-lede { max-width:600px; font-size:17px; line-height:1.55; color:#b3b1aa; }
+.post-meta { margin-top:22px; color:#777; font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.09em; }
+.post-body { margin-top:56px; }
+
+.post-body h2 { font-size:clamp(1.6rem,3vw,2.4rem); line-height:1.05; margin:64px 0 18px; scroll-margin-top:90px; }
+.post-body h2::before { content:"#"; color:var(--orange); margin-right:10px; }
+.post-body p { max-width:660px; margin:18px 0; }
+.post-body p:first-child { margin-top:0; }
+.post-body code { font-family:var(--mono); font-size:.86em; color:var(--orange); background:rgba(255,90,31,.08); padding:.08em .35em; }
+.post-body b { color:var(--paper); font-weight:600; }
+
+.pull { max-width:660px; margin:44px 0; padding:22px 24px 22px 0; border-top:2px solid var(--orange); border-bottom:1px solid var(--line); font-size:20px; line-height:1.4; color:var(--paper); letter-spacing:-.03em; }
+.pull p { margin:0; font-size:inherit; line-height:inherit; color:inherit; }
+.pull .pull-label { display:block; margin-bottom:12px; color:var(--orange); font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.1em; }
+.pull code { background:none; color:inherit; }
+
+.code-block { max-width:660px; padding:22px 24px; margin:24px 0; background:var(--charcoal); border:1px solid var(--line); overflow-x:auto; color:#c6c4bd; font:12px/1.7 var(--mono); }
+.code-block code { font-family:inherit; color:inherit; background:none; font-size:inherit; }
+
+.fig { margin:48px 0; }
+.fig-title { display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--line); color:#8f8f89; font:10px var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+.fig-title span:last-child { color:var(--paper-dim); }
+.fig figcaption { margin-top:14px; color:#777; font:11px var(--mono); }
+
+.diagram { margin-top:22px; border:1px solid var(--line); background:var(--charcoal); }
+.diagram svg { display:block; width:100%; height:auto; }
+.d-label text { fill:#777; font:10px var(--mono); text-transform:uppercase; letter-spacing:.09em; }
+.d-box { fill:#1b1b1b; stroke:#343434; stroke-width:1; }
+.d-box-dim { fill:#141414; stroke:rgba(255,90,31,.25); }
+.d-box-x { fill:#23110b; stroke:#ff5a1f; }
+.d-box-ok { fill:#121a14; stroke:rgba(255,90,31,.5); }
+.d-glyph { fill:var(--orange); font:14px var(--mono); }
+.d-box-x .d-glyph { fill:#ff5a1f; }
+.d-name { fill:var(--paper); font:500 11px var(--mono); letter-spacing:-.01em; }
+.d-mono { fill:#8f8f89; font:10px var(--mono); }
+.d-edge { stroke:var(--orange); stroke-width:1.4; }
+.d-edge.muted { stroke:#3a3a3a; }
+.d-link text { fill:var(--orange); }
+
+.post-cta { margin-top:48px; }
+.post-cta .button { color:var(--paper); }
+.post-cta .button:hover { background:var(--paper); color:var(--black); }
+
+@media (max-width:760px){
+  .blog-intro { padding-top:80px; }
+  .blog-post { padding-top:72px; }
+  .post-body h2 { margin-top:48px; }
+  .pull { font-size:18px; }
+  .diagram svg { min-width:520px; } .diagram { overflow-x:auto; }
+}

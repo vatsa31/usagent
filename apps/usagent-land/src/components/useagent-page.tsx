@@ -135,6 +135,7 @@ export function Header() {
           <a href="/#product">Product</a>
           <a href="/#providers">Providers</a>
           <a href="/#system">System</a>
+          <a href="/blog">Blog</a>
         </nav>
         <a className="header-cta" href={GITHUB_URL} target="_blank" rel="noreferrer">
           GitHub <span>→</span>
@@ -451,6 +452,7 @@ export function Footer() {
         <div>
           <a href="/#product">Product</a>
           <a href="/#providers">Providers</a>
+          <a href="/blog">Blog</a>
           <a href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </div>
